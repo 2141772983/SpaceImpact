@@ -663,11 +663,9 @@ public:
                 m_state = STATE_PAUSED;
             }
         } else if (m_state == STATE_PLAYER_HIT) {
-            // 中弹暂停状态：按下 Space 复位玩家位置，赋予 2 秒无敌闪烁护盾，恢复游戏
+            // 中弹暂停状态：按下 Space 原位恢复游戏（保持被击落时的原位置，赋予 2 秒无敌闪烁护盾）
             if (keySpace && !m_keyPrevSpace) {
-                m_playerX = 5;
-                m_playerY = LCD_HEIGHT / 2 - SHIP_HEIGHT / 2;
-                m_invincibleTimer = 2.0f;
+                m_invincibleTimer = 2.0f; // 2秒无敌保护
                 m_state = STATE_PLAYING;
                 PlaySoundEffect(523, 60);
             }
