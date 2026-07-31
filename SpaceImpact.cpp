@@ -477,6 +477,10 @@ public:
                 case '-': glyph[0]=0x0; glyph[1]=0x0; glyph[2]=0x7; glyph[3]=0x0; glyph[4]=0x0; break;
                 case '!': glyph[0]=0x2; glyph[1]=0x2; glyph[2]=0x2; glyph[3]=0x0; glyph[4]=0x2; break;
                 case '.': glyph[0]=0x0; glyph[1]=0x0; glyph[2]=0x0; glyph[3]=0x0; glyph[4]=0x2; break;
+                case '#': glyph[0]=0x5; glyph[1]=0x7; glyph[2]=0x7; glyph[3]=0x7; glyph[4]=0x2; break; // HP 心形像素
+                case '*': glyph[0]=0x5; glyph[1]=0x2; glyph[2]=0x7; glyph[3]=0x2; glyph[4]=0x5; break; // Bomb 星形弹药
+                case '/': glyph[0]=0x1; glyph[1]=0x1; glyph[2]=0x2; glyph[3]=0x4; glyph[4]=0x4; break;
+                case '+': glyph[0]=0x0; glyph[1]=0x2; glyph[2]=0x7; glyph[3]=0x2; glyph[4]=0x0; break;
                 default: break;
             }
 
