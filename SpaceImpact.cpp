@@ -828,9 +828,16 @@ public:
                 }
             }
 
-            // 敌机与玩家碰撞判定
-            if (e.active && m_invincibleTimer <= 0.0f &&
-                abs(e.x - m_playerX) < 6 && abs(e.y - m_playerY) < 5) {
+            // 敌机与玩家 AABB 矩形包围盒精准碰撞判定
+            int ew = (e.type == ENEMY_BOMBER) ? BOMBER_WIDTH : 
+                     ((e.type == ENEMY_SCOUT) ? SCOUT_WIDTH : 4);
+            int eh = (e.type == ENEMY_BOMBER) ? BOMBER_HEIGHT : 
+                     ((e.type == ENEMY_SCOUT) ? SCOUT_HEIGHT : 4);
+
+            bool overlapX = (m_playerX < e.x + ew) && (m_playerX + SHIP_WIDTH > e.x);
+            bool overlapY = (m_playerY < e.y + eh) && (m_playerY + SHIP_HEIGHT > e.y);
+
+            if (e.active && m_invincibleTimer <= 0.0f && overlapX && overlapY) {
                 e.active = false;
                 OnPlayerHit(); // 触发中弹暂停
                 return;
@@ -864,35 +871,49 @@ public:
 
         // 6. 子弹碰撞检测 (子弹 vs 玩家、子弹 vs 敌机/Boss)
         for (auto& b : m_bullets) {
-            // (1) 敌方红弹击中玩家
+            // (1) 敌方红弹击中玩家 (AABB 精确判定)
             if (!b.isPlayer) {
-                if (m_invincibleTimer <= 0.0f && abs(b.x - (m_playerX + SHIP_WIDTH / 2)) < 4 &&
-                    abs(b.y - (m_playerY + SHIP_HEIGHT / 2)) < 3) {
-                    b.x = -99;
+                if (m_invincibleTimer <= 0.0f &&
+                    b.x >= m_playerX - 1.0f && b.x <= m_playerX + SHIP_WIDTH &&
+                    b.y >= m_playerY - 1.0f && b.y <= m_playerY + SHIP_HEIGHT) {
+                    b.x = -99.0f;
                     OnPlayerHit(); // 触发中弹暂停
                     return;
                 }
                 continue;
             }
 
-            // (2) 玩家蓝光击中敌机
+            // (2) 玩家蓝光击中敌机 (AABB 矩形包围盒精确判定，解决轰炸机大尺寸穿透问题)
             for (auto& e : m_enemies) {
-                if (e.active && abs(b.x - e.x) < 5 && abs(b.y - e.y) < 4) {
-                    b.x = 999;
+                if (!e.active) continue;
+
+                int ew = (e.type == ENEMY_BOMBER) ? BOMBER_WIDTH : 
+                         ((e.type == ENEMY_SCOUT) ? SCOUT_WIDTH : 4);
+                int eh = (e.type == ENEMY_BOMBER) ? BOMBER_HEIGHT : 
+                         ((e.type == ENEMY_SCOUT) ? SCOUT_HEIGHT : 4);
+
+                // 精确判定子弹点 (b.x, b.y) 是否位于敌机矩形 [e.x-1, e.x+ew] x [e.y-1, e.y+eh] 内
+                if (b.x >= e.x - 1.0f && b.x <= e.x + ew &&
+                    b.y >= e.y - 1.0f && b.y <= e.y + eh) {
+                    float hitX = b.x, hitY = b.y;
+                    b.x = 999.0f; // 回收该子弹
                     e.hp -= b.damage;
+                    SpawnExplosion(hitX, hitY, 3); // 产生受击火花
+
                     if (e.hp <= 0) {
                         e.active = false;
                         m_score += e.scoreValue;
                         SaveHighScore(m_score);
-                        SpawnExplosion(e.x, e.y, 10);
+                        SpawnExplosion(e.x + ew / 2, e.y + eh / 2, 12);
 
                         // 25% 概率掉落道具
                         if (rand() % 4 == 0) {
                             PowerUpType ptype = (rand() % 3 == 0) ? POWER_WEAPON :
                                                 (rand() % 2 == 0 ? POWER_HEALTH : POWER_BOMB);
-                            m_powerUps.push_back({ e.x, e.y, -12.0f, ptype, true });
+                            m_powerUps.push_back({ e.x + ew / 2, e.y + eh / 2, -12.0f, ptype, true });
                         }
                     }
+                    break;
                 }
             }
 
